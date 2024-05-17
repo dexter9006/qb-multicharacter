@@ -2,12 +2,12 @@ local cam = nil
 local charPed = nil
 local loadScreenCheckState = false
 local QBCore = exports['qb-core']:GetCoreObject()
-local cached_player_skins = {}
+--local cached_player_skins = {}
 
-local randommodels = { -- models possible to load when choosing empty slot
-    'mp_m_freemode_01',
-    'mp_f_freemode_01',
-}
+--local randommodels = { -- models possible to load when choosing empty slot
+--    'mp_m_freemode_01',
+--    'mp_f_freemode_01',
+--}
 
 -- Main Thread
 
@@ -22,15 +22,15 @@ CreateThread(function()
 end)
 
 -- Functions
-
+--[[
 local function loadModel(model)
     RequestModel(model)
     while not HasModelLoaded(model) do
         Wait(0)
     end
 end
-
-
+--]]
+--[[
 local function initializePedModel(model, data)
     CreateThread(function()
         if not model then
@@ -48,6 +48,7 @@ local function initializePedModel(model, data)
         end
     end)
 end
+--]]
 
 local function skyCam(bool)
     TriggerEvent('qb-weathersync:client:DisableSync')
@@ -203,6 +204,7 @@ RegisterNUICallback('selectCharacter', function(data, cb)
     cb("ok")
 end)
 
+--[[
 RegisterNUICallback('cDataPed', function(nData, cb)
     local cData = nData.cData
     SetEntityAsMissionEntity(charPed, true, true)
@@ -239,6 +241,72 @@ RegisterNUICallback('cDataPed', function(nData, cb)
         cb("ok")
     end
 end)
+--]]
+-- Vitto (updated for ILLENIUM-appearence)
+RegisterNUICallback('cDataPed', function(nData, cb)
+    local cData = nData.cData
+    SetEntityAsMissionEntity(charPed, true, true)
+    DeleteEntity(charPed)
+    if cData ~= nil then
+        QBCore.Functions.TriggerCallback('qb-multicharacter:server:getSkin', function(skinData)
+            if skinData then
+                local model = joaat(skinData.model)
+                CreateThread(function()
+                    RequestModel(model)
+                    while not HasModelLoaded(model) do
+                        Wait(0)
+                    end
+                    charPed = CreatePed(2, model, Config.PedCoords.x, Config.PedCoords.y, Config.PedCoords.z - 0.98, Config.PedCoords.w, false, true)
+                    SetPedComponentVariation(charPed, 0, 0, 0, 2)
+                    FreezeEntityPosition(charPed, false)
+                    SetEntityInvincible(charPed, true)
+                    PlaceObjectOnGroundProperly(charPed)
+                    SetBlockingOfNonTemporaryEvents(charPed, true)
+                    exports['illenium-appearance']:setPedAppearance(charPed, skinData)
+                end)
+            else
+                CreateThread(function()
+                    local randommodels = {
+                        "mp_m_freemode_01",
+                        "mp_f_freemode_01",
+                    }
+                    model = joaat(randommodels[math.random(1, #randommodels)])
+                    RequestModel(model)
+                    while not HasModelLoaded(model) do
+                        Wait(0)
+                    end
+                    charPed = CreatePed(2, model, Config.PedCoords.x, Config.PedCoords.y, Config.PedCoords.z - 0.98, Config.PedCoords.w, false, true)
+                    SetPedComponentVariation(charPed, 0, 0, 0, 2)
+                    FreezeEntityPosition(charPed, false)
+                    SetEntityInvincible(charPed, true)
+                    PlaceObjectOnGroundProperly(charPed)
+                    SetBlockingOfNonTemporaryEvents(charPed, true)
+                end)
+            end
+            cb("ok")
+        end, cData.citizenid)
+    else
+        CreateThread(function()
+            local randommodels = {
+                "mp_m_freemode_01",
+                "mp_f_freemode_01",
+            }
+            local model = joaat(randommodels[math.random(1, #randommodels)])
+            RequestModel(model)
+            while not HasModelLoaded(model) do
+                Wait(0)
+            end
+            charPed = CreatePed(2, model, Config.PedCoords.x, Config.PedCoords.y, Config.PedCoords.z - 0.98, Config.PedCoords.w, false, true)
+            SetPedComponentVariation(charPed, 0, 0, 0, 2)
+            FreezeEntityPosition(charPed, false)
+            SetEntityInvincible(charPed, true)
+            PlaceObjectOnGroundProperly(charPed)
+            SetBlockingOfNonTemporaryEvents(charPed, true)
+        end)
+        cb("ok")
+    end
+end)
+-----------------------
 
 RegisterNUICallback('setupCharacters', function(_, cb)
     QBCore.Functions.TriggerCallback("qb-multicharacter:server:setupCharacters", function(result)
